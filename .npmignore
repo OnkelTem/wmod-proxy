@@ -1,0 +1,6 @@
+/.github/
+/.vscode/
+/cert/
+/dev/
+/node_modules/
+*.tgz

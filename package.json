@@ -1,0 +1,61 @@
+{
+  "name": "wmod-proxy",
+  "version": "0.0.1",
+  "description": "Website Modification Proxy",
+  "keywords": [
+    "propxy",
+    "mitm",
+    "browser extension",
+    "mockttp"
+  ],
+  "license": "LGPL-3.0-or-later",
+  "author": {
+    "name": "OnkelTem",
+    "email": "aneganov@gmail.com"
+  },
+  "main": "js",
+  "types": "js",
+  "bin": "bin/wmod-proxy",
+  "scripts": {
+    "prebuild": "rimraf js",
+    "build": "npm run build:types && npm run build:js",
+    "build:js": "babel src --out-dir js --extensions '.ts' --source-maps --copy-files --no-copy-ignored",
+    "build:types": "tsc -p tsconfig.build.json",
+    "dev": "nodemon src/cli.ts -w src -w test -i 'src/*.test.ts' -e 'js,ts' -- -d 8000 test/fixtures/example1",
+    "lint": "eslint -f visualstudio '*/**/*.{js,ts,tsx}'",
+    "release": "standard-version",
+    "start": "ts-node src/cli.ts -d 8000 test/fixtures/example1",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.17.9",
+    "mockttp": "^3.0.0",
+    "winston": "^3.7.2",
+    "yargs": "^17.5.0",
+    "zod": "^3.16.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.17.10",
+    "@babel/core": "^7.17.10",
+    "@babel/node": "^7.17.10",
+    "@babel/plugin-transform-runtime": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "@babel/preset-typescript": "^7.16.7",
+    "@tsconfig/node16": "^1.0.2",
+    "@types/config": "^0.0.41",
+    "@types/jest": "^27.5.1",
+    "@types/yargs": "^17.0.10",
+    "@typescript-eslint/eslint-plugin": "^5.23.0",
+    "@typescript-eslint/parser": "^5.23.0",
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "jest": "^28.1.0",
+    "nodemon": "^2.0.16",
+    "prettier": "^2.6.2",
+    "rimraf": "^3.0.2",
+    "standard-version": "^9.5.0",
+    "ts-jest": "^28.0.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4"
+  }
+}
