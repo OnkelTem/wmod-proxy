@@ -3,17 +3,16 @@
 A simple javascript MITM HTTP/HTTPS proxy built with [Mockttp](https://github.com/httptoolkit/mockttp) toolkit.
 
 It's used to inject scripts into existing websites. [Website Modification Script: Twitter](https://github.com/OnkelTem/wmod-script-twitter)
-is an example of such script. See it's README for more details.
+is an example of such a script. See its README for more details.
 
 MITM stands for [man-in-the-middle](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) cyberattack.
 It's also a great opportunity to modify almost any existing website or web application in a big scale.
 
 But what about browser extensions, you say, ain't they created for that purpose?
 
-Well, they are. But after years of browsers development, they have been finally rendered pretty limited
-in their capabilities. They're executed in a separate process and they can't effectively interfere
-with a web app, they can't even read what the app receives via network. But, obviously, we could
-perfectly achieve that by _injecting_ a script into the page itself.
+Well, they are. But after years of browser development, they have been finally rendered pretty limited
+in their capabilities. They're executed in a separate process, and they can't effectively interfere
+with a web app, they can't even read what the app receives via the network. But we could perfectly achieve that by _injecting_ a script into the page itself.
 
 It's an experimental project and is still under active development.
 
@@ -35,48 +34,59 @@ It will look for `manifest.js` file, which describes the modification details.
 
 ## `Manifest.js`
 
-Here is an example of Manifest-file, which can be found [here](test/fixtures/example1/manifest.js):
+Here is an example of Manifest-file, which can be found
+[here](https://github.com/OnkelTem/wmod-proxy/blob/master/test/fixtures/example1/manifest.js):
 
 ```js
 module.exports = {
-  name: 'test', // Wmod name
-  version: '0.0.1', // Wmod version
-  description: 'Test1', // Wmod description
+  // Wmod name
+  name: 'test',
+  // Wmod version
+  version: '0.0.1',
+  // Wmod description
+  description: 'Test1',
+  // A list of available modification script groups i.e. "scripts"
   scripts: [
-    // A list of available modification script groups i.e. "scripts"
     {
-      name: 'default', // A name of the script
+      // A name of the script
+      name: 'default',
+      // A list of files of the script
       files: [
-        // A list of files of the script
         {
-          path: 'inject.js', // A path to the file
-          inject: true, // A boolean flag indicating, if this file should be injected.
-          //               F.e. source map files are not needed to be injected into HTML.
+          // A path to the file
+          path: 'inject.js',
+          // A boolean flag indicating, if this file should be injected.
+          // F.e. source map files don't need an injection.
+          inject: true,
         },
       ],
     },
   ],
   rules: [
-    // A list of rules of response modifications: files injections, connection abortions etc
+    // A list of rules of response modifications: files injections,
+    // connection abortions etc
     {
-      hostname: 'twitter.com', // URL hostname to match
-      path: /^\/(home|search)/, // URL path to match
+      // URL hostname to match
+      hostname: 'twitter.com',
+      // URL path to match
+      path: /^\/(home|search)/,
+      // What has to be done with the matched reponses
       action: {
-        // An object representing what has to be done with the matched reponse
-        scripts: ['default'], // A list of script names to apply for the rule
+        // A list of script names to apply for the rule
+        scripts: ['default'],
       },
     },
     {
       hostname: 'ton.local.twitter.com',
       action: {
-        response: 404, // Stats code which should be send as a response to the matched URL
+        // HTTP status code to send as a response
+        response: 404,
       },
     },
   ],
 };
 ```
 
-## Future plans
+## Plans
 
-Currently we can essentially inject only one script at a time. Thus, one obvious direction of development is
-to make it a script manager with its own scripts storage.
+Currently, we can essentially inject only one script at a time. Thus, one obvious direction of development is to make it a script manager with its own script storage.

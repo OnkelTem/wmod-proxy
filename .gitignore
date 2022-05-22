@@ -3,3 +3,4 @@
 /cert/
 /js/
 *.tgz
+/package-lock.json

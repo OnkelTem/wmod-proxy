@@ -2,6 +2,7 @@ name: Node.js Package
 on:
   release:
     types: [created]
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
@@ -17,7 +18,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://registry.npmjs.org'
       - name: Installing dependencies
-        run: npm ci
+        run: npm i
       - name: Running ESlint
         run: npm run lint
       - name: Running tests
