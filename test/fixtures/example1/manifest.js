@@ -16,7 +16,7 @@ module.exports = {
   rules: [
     {
       hostname: 'twitter.com',
-      path: /^\/(home|search)/,
+      path: /^\/($|home|search)/,
       // path: /^\/(home|search|[^/]+?\/status)/,
       action: {
         scripts: ['default'],

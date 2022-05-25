@@ -31,7 +31,6 @@ export default async function proxy(port: number, wmod: string) {
   const keys = await getSslKeys();
 
   // Create server
-  //const server = getLocal({ https: keys, http2: false });
   const server = getLocal({ https: keys, http2: false });
 
   // Configure server
@@ -54,7 +53,8 @@ export default async function proxy(port: number, wmod: string) {
     if (path != null || url != null) {
       builder = builder.matching((req) => {
         if (path != null) {
-          if (path instanceof RegExp ? path.test(req.path) : path === req.path) {
+          const reqUrl = new URL(req.url);
+          if (path instanceof RegExp ? path.test(reqUrl.pathname) : path === reqUrl.pathname) {
             logger.dbg(`Matched PATH: "${req.path}"`);
             return true;
           }
