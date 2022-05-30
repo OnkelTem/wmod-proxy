@@ -35,6 +35,7 @@ export default async function proxy(port: number, wmod: string) {
 
   // Configure server
 
+  // An auxiliary map for tracking requests and responses
   const reqResMap = new Map<string, CompletedRequest>();
 
   for (const { url, hostname, path, action } of manifest.rules) {
@@ -87,6 +88,8 @@ export default async function proxy(port: number, wmod: string) {
               return undefined;
             }
             const req = reqResMap.get(res.id)!;
+            // Remove used req-res map entry
+            reqResMap.delete(res.id);
             logger.dbg(`<=== ${req.method} ${req.url}`);
 
             let bodyText = await res.body.getText();
@@ -98,6 +101,8 @@ export default async function proxy(port: number, wmod: string) {
               delete headersAll['content-security-policy'];
             }
             if (bodyText != null) {
+              // For debugging
+              // saveFile(`./${req.id}.html`, `${req.method} ${req.url}\n${bodyText}`);
               let isReplaced = false;
               bodyText = bodyText.replace(/<body[^>]*>/, (match) => {
                 isReplaced = true;
