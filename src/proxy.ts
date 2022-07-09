@@ -15,7 +15,6 @@ import { getLogger } from './logger';
 import { isManifestRuleActionClose, isManifestRuleActionResponse, isResolvedManifestRuleActionScripts } from './model';
 
 export const MANIFEST_FILE = 'manifest.js';
-const TRUNCATE_LENGTH = 90;
 
 export default async function proxy(port: number, wmod: string) {
   const manifestPath = join(wmod, MANIFEST_FILE);
@@ -38,34 +37,42 @@ export default async function proxy(port: number, wmod: string) {
   // An auxiliary map for tracking requests and responses
   const reqResMap = new Map<string, CompletedRequest>();
 
-  for (const { url, hostname, path, action } of manifest.rules) {
+  manifest.rules.forEach(({ url, hostname, path, action, method }, ruleId) => {
     // TODO: remove this later when mockttp can handle RegExp hostnames
     if (hostname != null && hostname instanceof RegExp) {
       throw new ProxyError('Not implemented: hostname is RegExp (1)');
     }
 
-    // Build injector
+    logger.dbg(`Action: method=${method}`);
 
+    // Build rule
     let builder: RequestRuleBuilder;
     builder = server.forAnyRequest();
-    if (hostname != null) {
-      builder = builder.forHostname(hostname);
-    }
-    if (path != null || url != null) {
+    if (path != null || url != null || hostname != null || method != null) {
       builder = builder.matching((req) => {
+        logger.dbg(`${ruleId}: r------: [${$id(req)}] ${$method(req)} ${$url(req)}`);
+        if (method != null && req.method !== method) {
+          logger.dbg(`${ruleId}: -M-----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
+          return false;
+        }
+        const reqUrl = new URL(req.url);
+        if (hostname != null && reqUrl.hostname !== hostname) {
+          logger.dbg(`${ruleId}: -H-----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
+          return false;
+        }
         if (path != null) {
-          const reqUrl = new URL(req.url);
           if (path instanceof RegExp ? path.test(reqUrl.pathname) : path === reqUrl.pathname) {
-            logger.dbg(`Matched PATH: "${req.path}"`);
+            logger.dbg(`${ruleId}: -p-----: [${$id(req)}] ${$method(req)} ${$path(req)}`);
             return true;
           }
         }
         if (url != null) {
           if (url instanceof RegExp ? url.test(req.url) : url === req.url) {
-            logger.dbg(`Matched URL: "${req.url}"`);
+            logger.dbg(`${ruleId}: -u-----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
             return true;
           }
         }
+        logger.dbg(`${ruleId}: -S-----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
         return false;
       });
     }
@@ -77,20 +84,22 @@ export default async function proxy(port: number, wmod: string) {
         builder.thenPassThrough({
           beforeRequest: (req) => {
             reqResMap.set(req.id, req);
-            logger.dbg(`===> ${req.method} ${req.url}`);
+            logger.dbg(`${ruleId}: --r----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
           },
           beforeResponse: async (res) => {
-            if (!isContentTypeHtml(res.headers)) {
-              return undefined;
-            }
+            logger.dbg(`${ruleId}: ---r---: [${$id(res)}]`);
             if (!reqResMap.has(res.id)) {
-              logger.dbg(`<=== NO MATCH for res.id = ${res.id}`);
+              logger.dbg(`${ruleId}: ----?--: [${$id(res)}]`);
               return undefined;
             }
             const req = reqResMap.get(res.id)!;
+            if (!isContentTypeHtml(res.headers)) {
+              logger.dbg(`${ruleId}: ----T--: [${$id(req)}] ${$method(req)} ${$url(req)}`);
+              return undefined;
+            }
             // Remove used req-res map entry
             reqResMap.delete(res.id);
-            logger.dbg(`<=== ${req.method} ${req.url}`);
+            logger.dbg(`${ruleId}: ----r--: [${$id(req)}] ${$method(req)} ${$url(req)}`);
 
             let bodyText = await res.body.getText();
 
@@ -102,7 +111,7 @@ export default async function proxy(port: number, wmod: string) {
             }
             if (bodyText != null) {
               // For debugging
-              // saveFile(`./${req.id}.html`, `${req.method} ${req.url}\n${bodyText}`);
+              // saveFile(`./${req.id}.html`, `${$method(req)} ${req.url}\n${bodyText}`);
               let isReplaced = false;
               bodyText = bodyText.replace(/<body[^>]*>/, (match) => {
                 isReplaced = true;
@@ -112,7 +121,9 @@ export default async function proxy(port: number, wmod: string) {
                   .forEach((file) => {
                     const scriptName = basename(file.path);
                     const scriptSitePath = `/${scriptName}`;
-                    logger.info(`Injecting script "${scriptSitePath}"`);
+                    logger.info(
+                      `${ruleId}: -----i-: [${$id(req)}] ${$method(req)} ${$url(req)} <== "${scriptSitePath}"`,
+                    );
                     result += `<script src="${scriptSitePath}"></script>`;
                   });
                 return result;
@@ -121,6 +132,7 @@ export default async function proxy(port: number, wmod: string) {
                 throw new ProxyError('Cannot find the pattern for script injection');
               }
             }
+            logger.dbg(`${ruleId}: ------r: [${$id(req)}] ${$method(req)} ${$url(req)}`);
             return { body: bodyText, headers: headersAll };
           },
         });
@@ -129,12 +141,12 @@ export default async function proxy(port: number, wmod: string) {
       }
     } else if (isManifestRuleActionResponse(action)) {
       builder.thenCallback((req) => {
-        logger.info(`RESPONSE ${action.response} ON ${truncate(req.url, TRUNCATE_LENGTH)}`);
+        logger.info(`${ruleId}: --s----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
         return { statusCode: action.response };
       });
     } else if (isManifestRuleActionClose(action) && action.close) {
       builder.thenCallback((req) => {
-        logger.info(`CLOSE ON ${truncate(req.url, TRUNCATE_LENGTH)}`);
+        logger.info(`${ruleId}: --c----: [${$id(req)}] ${$method(req)} ${$url(req)}`);
         return 'close';
       });
     }
@@ -151,8 +163,8 @@ export default async function proxy(port: number, wmod: string) {
         if (hostname != null) {
           builder = builder.forHostname(hostname);
         }
-        builder.thenCallback(() => {
-          logger.info(`Sending ${join(wmod, file.path)}`);
+        builder.thenCallback((req) => {
+          logger.info(`${ruleId}: --f----: [${$id(req)}] ${$method(req)} ${$url(req)} <== ${join(wmod, file.path)}`);
           return {
             statusCode: 200,
             headers: {
@@ -163,7 +175,7 @@ export default async function proxy(port: number, wmod: string) {
         });
       });
     }
-  }
+  });
 
   server.forUnmatchedRequest().thenPassThrough();
 
@@ -180,6 +192,22 @@ export default async function proxy(port: number, wmod: string) {
 
 function truncate(str: string, n: number) {
   return str.length > n ? str.substring(0, n - 1) + '...' : str;
+}
+
+function $id(obj: { id: string }) {
+  return obj.id.substring(0, 6);
+}
+
+function $url(obj: { url: string }) {
+  return truncate(obj.url, 100);
+}
+
+function $path(obj: { path: string }) {
+  return truncate(obj.path, 100);
+}
+
+function $method(obj: { method: string }) {
+  return obj.method.padEnd(7, ' ');
 }
 
 async function getSslKeys() {

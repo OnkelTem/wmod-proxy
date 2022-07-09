@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { HTTPMethod } from 'http-method-enum';
 import {
   Manifest,
   ManifestRule,
@@ -47,6 +48,7 @@ export const schemaManifestRule: z.ZodType<ManifestRule> = z
     url: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     hostname: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     path: z.union([z.string(), z.instanceof(RegExp)]).optional(),
+    method: z.nativeEnum(HTTPMethod).optional(),
     action: z.union([schemaManifestRuleActionResponse, schemaManifestRuleActionScripts, schemaManifestRuleActionClose]),
   })
   .strict();

@@ -18,7 +18,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://registry.npmjs.org'
       - name: Installing dependencies
-        run: npm i
+        run: npm ci
       - name: Running ESlint
         run: npm run lint
       - name: Running tests

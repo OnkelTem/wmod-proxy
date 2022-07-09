@@ -1,3 +1,5 @@
+import { HTTPMethod } from 'http-method-enum';
+
 export type Manifest = {
   name: string;
   version?: string;
@@ -13,6 +15,7 @@ export type ManifestRule = {
   url?: string | RegExp;
   hostname?: string | RegExp;
   path?: string | RegExp;
+  method?: HTTPMethod;
   action: ManifestRuleAction;
 };
 

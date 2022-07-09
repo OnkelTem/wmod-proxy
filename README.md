@@ -1,6 +1,8 @@
 # Website Modification Proxy
 
-A simple javascript MITM HTTP/HTTPS proxy built with [Mockttp](https://github.com/httptoolkit/mockttp) toolkit.
+![npm](https://img.shields.io/npm/v/wmod-proxy)
+
+`wmod-proxy` is a simple javascript MITM HTTP/HTTPS proxy built with [Mockttp](https://github.com/httptoolkit/mockttp) toolkit.
 
 It's used to inject scripts into existing websites. [Website Modification Script: Twitter](https://github.com/OnkelTem/wmod-script-twitter)
 is an example of such a script. See its README for more details.

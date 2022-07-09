@@ -13,6 +13,11 @@
     "name": "OnkelTem",
     "email": "aneganov@gmail.com"
   },
+  "homepage": "https://github.com/OnkelTem/wmod-proxy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OnkelTem/wmod-proxy.git"
+  },
   "main": "js",
   "types": "js",
   "bin": "bin/wmod-proxy",
@@ -29,6 +34,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.9",
+    "http-method-enum": "^1.0.0",
     "mockttp": "^3.0.0",
     "winston": "^3.7.2",
     "yargs": "^17.5.0",
